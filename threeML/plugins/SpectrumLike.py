@@ -31,7 +31,8 @@ from threeML.io.rich_display import display
 from threeML.plugin_prototype import PluginPrototype
 from threeML.plugins.XYLike import XYLike
 from threeML.utils.binner import Rebinner
-from threeML.utils.spectrum.binned_spectrum import BinnedSpectrum, ChannelSet, Quality
+from threeML.utils.spectrum.binned_spectrum import (BinnedSpectrum, ChannelSet,
+                                                    Quality)
 from threeML.utils.spectrum.pha_spectrum import PHASpectrum
 from threeML.utils.spectrum.spectrum_likelihood import statistic_lookup
 from threeML.utils.statistics.stats_tools import Significance
@@ -1925,18 +1926,18 @@ class SpectrumLike(PluginPrototype):
 
             log.debug(f"{self.name} is using all point sources")
             
-            n_point_sources = likelihood_model.get_number_of_point_sources()
+            n_point_sources = likelihood_model.get_number_of_electro_magnetic_point_sources()
 
             # Make a function which will stack all point sources (OGIP do not support spatial dimension)
 
             def differential_flux(energies):
-                fluxes = likelihood_model.get_point_source_fluxes(
+                fluxes = likelihood_model.get_electro_magnetic_point_source_fluxes(
                     0, energies, tag=self._tag
                 )
 
                 # If we have only one point source, this will never be executed
                 for i in range(1, n_point_sources):
-                    fluxes += likelihood_model.get_point_source_fluxes(
+                    fluxes += likelihood_model.get_electro_magnetic_point_source_fluxes(
                         i, energies, tag=self._tag
                     )
 
