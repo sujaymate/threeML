@@ -1014,13 +1014,48 @@ class SpectrumLike(PluginPrototype):
         if self._like_model is not None:
             if source_name not in self._like_model.sources:
                 log.error(
-                    "Source %s is not contained in "
-                    "the likelihood model" % source_name
+                    f"Source {source_name} is not contained in "
+                    "the likelihood model"
                 )
 
                 raise RuntimeError()
 
-        self._source_name = source_name
+            self._source_name = source_name
+
+            differential_flux, integral = self._get_diff_flux_and_integral(
+                self._like_model, integrate_method=self.model_integrate_method
+            )
+
+            log.info(
+                f"rebuilding integral flux function to only use {source_name}"
+            )
+
+            self._integral_flux = integral
+
+        else:
+
+            self._source_name = source_name
+
+    def unassign_to_source(self) -> None:
+
+        """
+        Remove any source assignment and apply to
+        all point sources
+
+        :returns:
+
+        """
+        self._source_name = None
+
+        if self._like_model is not None:
+
+            differential_flux, integral = self._get_diff_flux_and_integral(
+                self._like_model, integrate_method=self.model_integrate_method
+            )
+
+            log.info(f"rebuilding integral flux function to use sources")
+
+            self._integral_flux = integral
 
     @property
     def likelihood_model(self) -> Model:
@@ -1927,8 +1962,8 @@ class SpectrumLike(PluginPrototype):
         if self._source_name is not None:
             if self._source_name not in self._like_model.sources:
                 log.error(
-                    "Source %s is not contained in "
-                    "the likelihood model" % self._source_name
+                    f"Source {self._source_name} is not contained in "
+                    "the likelihood model"
                 )
 
                 raise RuntimeError()
@@ -2341,7 +2376,7 @@ class SpectrumLike(PluginPrototype):
 
     def ___get_model_integrate_method(self) -> str:
 
-        self.__set_model_integrate_method()
+        return self.__get_model_integrate_method()
 
     model_integrate_method = property(
         ___get_model_integrate_method,

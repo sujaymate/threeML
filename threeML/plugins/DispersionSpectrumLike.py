@@ -131,6 +131,17 @@ class DispersionSpectrumLike(SpectrumLike):
 
         self._response.set_function(self._integral_flux)
 
+    def assign_to_source(self, source_name: str) -> None:
+        super().assign_to_source(source_name)
+
+        self._response.set_function(self._integral_flux)
+
+    def unassign_to_source(self) -> None:
+        super().unassign_to_source()
+
+        self._response.set_function(self._integral_flux)
+
+
     def _evaluate_model(
         self, precalc_fluxes: Optional[np.array] = None
     ) -> np.ndarray:
