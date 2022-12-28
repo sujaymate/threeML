@@ -1,1 +1,1 @@
-from bayesian_analysis import BayesianAnalysis
+from .bayesian_analysis import BayesianAnalysis

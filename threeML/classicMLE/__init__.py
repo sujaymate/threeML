@@ -1,1 +1,1 @@
-from joint_likelihood import JointLikelihood
+from .joint_likelihood import JointLikelihood
