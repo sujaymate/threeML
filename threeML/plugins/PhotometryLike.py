@@ -2,6 +2,7 @@ import collections
 import copy
 from typing import Any, Dict, Optional, Union
 
+import matplotlib.cm as cm
 import numpy as np
 from speclite.filters import FilterResponse, FilterSequence
 from threeML.config import threeML_config
@@ -292,11 +293,13 @@ class PhotometryLike(XYLike):
 
     def plot(
         self,
-        data_color: str = "r",
-        model_color: str = "blue",
+        data_cmap: str = "Spectral",
+        model_color: str = "k",
         show_data: bool = True,
         show_residuals: bool = True,
         show_legend: bool = True,
+        min_wave_lenght: Optional[float] = None,
+        max_wave_lenght: Optional[float] = None,
         model_label: Optional[str] = None,
         model_kwargs: Optional[Dict[str, Any]] = None,
         data_kwargs: Optional[Dict[str, Any]] = None,
@@ -330,7 +333,6 @@ class PhotometryLike(XYLike):
         _sub_menu = threeML_config.plotting.residual_plot
 
         _default_data_kwargs = dict(
-            color=data_color,
             alpha=1,
             fmt=_sub_menu.marker,
             markersize=_sub_menu.size,
@@ -339,7 +341,7 @@ class PhotometryLike(XYLike):
             capsize=0,
         )
 
-        # overwrite if these are in the confif
+        # overwrite if these are in the config
 
         _kwargs_menu = threeML_config.plugins.photo.fit_plot
 
@@ -421,34 +423,64 @@ class PhotometryLike(XYLike):
 
         sort_idx = avg_wave_length.argsort()
 
-        expected_model_magnitudes = self._get_total_expectation()[sort_idx]
+        labels = self._filter_set.filter_names[sort_idx]
+
         magnitudes = self.magnitudes[sort_idx]
         mag_errors = self.magnitude_errors[sort_idx]
         avg_wave_length = avg_wave_length[sort_idx]
 
-        residuals = (expected_model_magnitudes - magnitudes) / mag_errors
+        if self._likelihood_model is not None:
+            expected_model_magnitudes = self._get_total_expectation()[sort_idx]
+
+            residuals = (expected_model_magnitudes - magnitudes) / mag_errors
+
+        else:
+
+            residuals = np.zeros_like(magnitudes)
+
+            expected_model_magnitudes = np.zeros_like(magnitudes)
+
+            show_residuals = False
 
         widths = self._filter_set.wavelength_bounds.widths[sort_idx]
 
         residual_plot = ResidualPlot(show_residuals=show_residuals, **kwargs)
 
-        residual_plot.add_data(
-            x=avg_wave_length,
-            y=magnitudes,
-            xerr=widths / 2.0,
-            yerr=mag_errors,
-            residuals=residuals,
-            label=self._name,
-            show_data=show_data,
-            **_default_data_kwargs,
-        )
+        if min_wave_lenght is None or max_wave_lenght is None:
 
-        residual_plot.add_model(
-            avg_wave_length,
-            expected_model_magnitudes,
-            label=model_label,
-            **_default_model_kwargs,
-        )
+            min_wlen, max_wlen = min(avg_wave_length), max(avg_wave_length)
+
+        else:
+
+            min_wlen, max_wlen = min_wave_lenght, max_wave_lenght
+
+        cmap = cm.get_cmap(data_cmap)
+
+        for i, wlen in enumerate(avg_wave_length):
+
+            c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
+
+            _default_data_kwargs["color"] = c
+
+            residual_plot.add_data(
+                x=avg_wave_length[i],
+                y=magnitudes[i],
+                xerr=widths[i] / 2.0,
+                yerr=mag_errors[i],
+                residuals=residuals[i],
+                label=f"{self._name} {labels[i]}",
+                show_data=show_data,
+                **_default_data_kwargs,
+            )
+
+        if self._likelihood_model is not None:
+
+            residual_plot.add_model(
+                avg_wave_length,
+                expected_model_magnitudes,
+                label=model_label,
+                **_default_model_kwargs,
+            )
 
         return residual_plot.finalize(
             xlabel=f"Wavelength\n({self._filter_set.waveunits})",
@@ -456,7 +488,7 @@ class PhotometryLike(XYLike):
             xscale="linear",
             yscale="linear",
             invert_y=True,
-            show_legend=show_legend
+            show_legend=show_legend,
         )
 
     def _new_plugin(self, name, x, y, yerr):

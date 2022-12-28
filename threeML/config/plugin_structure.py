@@ -5,7 +5,12 @@ from typing import Any, Dict, List, Optional
 import matplotlib.pyplot as plt
 from omegaconf import II, MISSING, SI, OmegaConf
 
-from .plotting_structure import BinnedSpectrumPlot, DataHistPlot, MPLCmap
+from .plotting_structure import (
+    BinnedSpectrumPlot,
+    DataHistPlot,
+    MPLCmap,
+    PhotoSpectrumPlot,
+)
 
 
 @dataclass
@@ -18,7 +23,7 @@ class OGIP:
 
 @dataclass
 class Photo:
-    fit_plot: BinnedSpectrumPlot = BinnedSpectrumPlot()
+    fit_plot: PhotoSpectrumPlot = PhotoSpectrumPlot()
 
 
 @dataclass

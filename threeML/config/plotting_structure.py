@@ -26,6 +26,21 @@ class BinnedSpectrumPlot:
     model_mpl_kwargs: Optional[Dict[str, Any]] = None
     background_mpl_kwargs: Optional[Dict[str, Any]] = None
 
+@dataclass
+class PhotoSpectrumPlot:
+    data_cmap: MPLCmap = MPLCmap.Spectral
+    model_cmap: MPLCmap = MPLCmap.Set1
+    n_colors: int = 5
+    step: bool = False
+    show_legend: bool = True
+    show_residuals: bool = True
+    model_color: Optional[str] = None
+    background_color: Optional[str] = None
+    data_mpl_kwargs: Optional[Dict[str, Any]] = None
+    model_mpl_kwargs: Optional[Dict[str, Any]] = None
+    background_mpl_kwargs: Optional[Dict[str, Any]] = None
+
+
 
 @dataclass
 class DataHistPlot:

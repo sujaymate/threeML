@@ -203,6 +203,7 @@ class ResidualPlot:
         # if we want to show the data
 
         if show_data:
+
             self._data_axis.errorbar(
                 x, y, yerr=yerr, xerr=xerr, label=label, **kwargs
             )

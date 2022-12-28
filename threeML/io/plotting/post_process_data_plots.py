@@ -1,3 +1,5 @@
+from typing import Union, Optional, List
+
 import matplotlib.pyplot as plt
 import numpy as np
 import threeML.plugins.PhotometryLike as photolike
@@ -10,6 +12,8 @@ try:
 except:
     LATLike = False
 
+from threeML.bayesian import BayesianAnalysis
+from threeML.classicMLE import JointLikelihood
 from threeML.config.config import threeML_config
 from threeML.config.plotting_structure import BinnedSpectrumPlot
 from threeML.exceptions.custom_exceptions import custom_warnings
@@ -472,7 +476,11 @@ def display_spectrum_model_counts(analysis, data=(), **kwargs):
         return figs
 
 
-def display_photometry_model_magnitudes(analysis, data=(), **kwargs):
+def display_photometry_model_magnitudes(
+    analysis: Union[JointLikelihood, BayesianAnalysis],
+    data: Optional[List[str]] = None,
+    **kwargs
+):
     """
 
     Display the fitted model count spectrum of one or more Spectrum plugins
@@ -498,7 +506,7 @@ def display_photometry_model_magnitudes(analysis, data=(), **kwargs):
 
     # If the user supplies a subset of the data, we will use that
 
-    if not data:
+    if data is None:
 
         data_keys = list(analysis.data_list.keys())
 
@@ -506,7 +514,7 @@ def display_photometry_model_magnitudes(analysis, data=(), **kwargs):
 
         data_keys = data
 
-    # Now we want to make sure that we only grab OGIP plugins
+    # Now we want to make sure that we only grab Photometrylike plugins
 
     new_data_keys = []
 
@@ -561,7 +569,12 @@ def display_photometry_model_magnitudes(analysis, data=(), **kwargs):
 
     # Default colors
 
-    data_colors = cmap_intervals(len(data_keys), data_cmap)
+    wave_lenghts = []
+
+    for datum in data_keys:
+
+        d = analysis.data_list
+
     model_colors = cmap_intervals(len(data_keys), model_cmap)
 
     if "data_color" in kwargs:
