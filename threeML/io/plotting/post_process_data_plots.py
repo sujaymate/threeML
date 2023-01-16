@@ -479,7 +479,8 @@ def display_spectrum_model_counts(analysis, data=(), **kwargs):
 def display_photometry_model_magnitudes(
     analysis: Union[JointLikelihood, BayesianAnalysis],
     data: Optional[List[str]] = None,
-    **kwargs
+        color_bands_independently: bool = True,
+    **kwargs,
 ):
     """
 
@@ -529,15 +530,18 @@ def display_photometry_model_magnitudes(
 
             else:
 
-                custom_warnings.warn(
-                    "Dataset %s is not of the Photometery kind. Cannot be plotted by "
-                    "display_photometry_model_magnitudes" % key
+                log.warning(
+                    f"Dataset {key} is not of the PhotometryLike kind. Cannot be plotted by "
+                    "display_photometry_model_magnitudes"
                 )
 
     if not new_data_keys:
-        RuntimeError(
-            "There were no valid Photometry data requested for plotting. Please use the detector names in the data list"
-        )
+
+        msg = "There were no valid Photometry data requested for plotting. Please use the detector names in the data list"
+
+        log.error(msg)
+
+        RuntimeError(msg)
 
     data_keys = new_data_keys
 
@@ -567,19 +571,24 @@ def display_photometry_model_magnitudes(
     # Legend is on by default
     show_legend = True
 
-    # Default colors
+    # find the maximum and minimum wave length of all filters
 
-    wave_lenghts = []
+    wave_lengths = []
 
     for datum in data_keys:
 
-        d = analysis.data_list
+        d: photolike.PhotometryLike = analysis.data_list[datum]
+
+        wave_lengths.append(d.filter_set.effective_wavelength.value.min())
+        wave_lengths.append(d.filter_set.effective_wavelength.value.max())
+
+    min_wave_length, max_wave_length = min(wave_lengths), max(wave_lengths)
 
     model_colors = cmap_intervals(len(data_keys), model_cmap)
 
-    if "data_color" in kwargs:
+    # if "data_color" in kwargs:
 
-        data_colors = [kwargs.pop("data_color")] * len(data_keys)
+    #     data_colors = [kwargs.pop("data_color")] * len(data_keys)
 
     if "model_color" in kwargs:
 
@@ -602,15 +611,15 @@ def display_photometry_model_magnitudes(
         model_cmap = kwargs.pop("model_cmap")
         model_colors = cmap_intervals(len(data_keys), model_cmap)
 
-    if "data_colors" in kwargs:
-        data_colors = kwargs.pop("data_colors")
+    # if "data_colors" in kwargs:
+    #     data_colors = kwargs.pop("data_colors")
 
-        if len(data_colors) < len(data_keys):
-            log.error(
-                "You need to provide at least a number of data colors equal to the "
-                "number of datasets"
-            )
-            raise ValueError()
+    #     if len(data_colors) < len(data_keys):
+    #         log.error(
+    #             "You need to provide at least a number of data colors equal to the "
+    #             "number of datasets"
+    #         )
+    #         raise ValueError()
 
     if "model_colors" in kwargs:
         model_colors = kwargs.pop("model_colors")
@@ -620,7 +629,25 @@ def display_photometry_model_magnitudes(
                 "You need to provide at least a number of model colors equal to the "
                 "number of datasets"
             )
-            raise ValueError()
+            raise ValueError(
+                "You need to provide at least a number of model colors equal to the "
+                "number of datasets"
+            )
+
+
+    if "data_colors" in kwargs:
+        data_colors = kwargs.pop("data_colors")
+
+        if len(data_colors) < len(data_keys):
+            log.error(
+                "You need to provide at least a number of model colors equal to the "
+                "number of datasets"
+            )
+            raise ValueError(
+                "You need to provide at least a number of model colors equal to the "
+                "number of datasets"
+            )
+
 
     data_kwargs = None
 
@@ -642,22 +669,47 @@ def display_photometry_model_magnitudes(
 
     axes = residual_plot.axes
 
-    # go thru the detectors
-    for key, data_color, model_color in zip(
-        data_keys, data_colors, model_colors
-    ):
 
-        data: photolike.PhotometryLike = analysis.data_list[key]
+    if color_bands_independently:
 
-        data.plot(
-            model_subplot=axes,
-            model_color=model_color,
-            data_color=data_color,
-            model_kwargs=model_kwargs,
-            data_kwargs=data_kwargs,
-            show_residuals=show_residuals,
-            show_legend=show_legend,
-            **kwargs,
-        )
+        # go thru the detectors
+        for key, model_color in zip(data_keys, model_colors):
+
+            data: photolike.PhotometryLike = analysis.data_list[key]
+
+            data.plot(
+                model_subplot=axes,
+                data_cmap=data_cmap,
+                model_color=model_color,
+                model_kwargs=model_kwargs,
+                data_kwargs=data_kwargs,
+                show_residuals=show_residuals,
+                show_legend=show_legend,
+                min_wave_length=min_wave_length,
+                max_wave_length=max_wave_length,
+                **kwargs,
+            )
+
+    else:
+
+        # go thru the detectors
+        for key, data_color, model_color in zip(data_keys, data_colors, model_colors):
+
+            data: photolike.PhotometryLike = analysis.data_list[key]
+
+            data.plot(
+                model_subplot=axes,
+                #data_cmap=data_cmap,
+                data_color=data_color,
+                model_color=model_color,
+                model_kwargs=model_kwargs,
+                data_kwargs=data_kwargs,
+                show_residuals=show_residuals,
+                show_legend=show_legend,
+                min_wave_length=min_wave_length,
+                max_wave_length=max_wave_length,
+                **kwargs,
+            )
+
 
     return residual_plot

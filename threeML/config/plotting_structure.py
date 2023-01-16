@@ -38,7 +38,7 @@ class PhotoSpectrumPlot:
     background_color: Optional[str] = None
     data_mpl_kwargs: Optional[Dict[str, Any]] = None
     model_mpl_kwargs: Optional[Dict[str, Any]] = None
-    background_mpl_kwargs: Optional[Dict[str, Any]] = None
+
 
 
 

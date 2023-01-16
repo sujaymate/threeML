@@ -25,8 +25,8 @@ class ResidualPlot:
         :param model_subplot: and axis or list of axes to plot to rather than create a new one
         """
 
-        self._ratio_residuals = False
-        self._show_residuals = True
+        self._ratio_residuals: bool = False
+        self._show_residuals: bool = True
 
         if "show_residuals" in kwargs:
 
@@ -212,6 +212,8 @@ class ResidualPlot:
 
         if self._show_residuals:
 
+            residuals = np.atleast_1d(residuals)
+
             # normal residuals from the likelihood
 
             if not self.ratio_residuals:
@@ -299,6 +301,15 @@ class ResidualPlot:
         self._fig.subplots_adjust(hspace=0)
 
         if invert_y:
-            self._data_axis.set_ylim(self._data_axis.get_ylim()[::-1])
+
+            self._data_axis.autoscale(enable=True)
+
+            ylims = np.array(self._data_axis.get_ylim())
+
+            if ylims[0] < ylims[-1]:
+
+                ylims = ylims[::-1]
+
+            self._data_axis.set_ylim(ylims)
 
         return self._fig

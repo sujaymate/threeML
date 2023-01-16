@@ -99,9 +99,13 @@ class PhotometryLike(XYLike):
         :param observation: A PhotometricObservation instance
         """
 
-        assert isinstance(
-            observation, PhotometericObservation
-        ), "Observation must be PhotometricObservation"
+        if not isinstance(observation, PhotometericObservation):
+
+            msg = "Observation must be PhotometricObservation"
+
+            log.error(msg)
+
+            raise AssertionError(msg)
 
         # convert names so that only the filters are present
         # speclite uses '-' to separate instrument and filter
@@ -148,9 +152,9 @@ class PhotometryLike(XYLike):
 
         self._filter_set = FilterSet(filters, mask)
 
-        self._magnitudes = np.zeros(self._filter_set.n_bands)
+        self._magnitudes: np.ndarray = np.zeros(self._filter_set.n_bands)
 
-        self._magnitude_errors = np.zeros(self._filter_set.n_bands)
+        self._magnitude_errors: np.ndarray = np.zeros(self._filter_set.n_bands)
 
         # we want to fill the magnitudes in the same order as the
         # the filters
@@ -160,7 +164,7 @@ class PhotometryLike(XYLike):
             self._magnitudes[i] = observation[band][0]
             self._magnitude_errors[i] = observation[band][1]
 
-        self._observation = observation
+        self._observation: PhotometericObservation = observation
 
         # pass thru to XYLike
 
@@ -189,6 +193,10 @@ class PhotometryLike(XYLike):
     def observation(self) -> PhotometericObservation:
 
         return self._observation
+
+    @property
+    def filter_set(self) -> FilterSet:
+        return self._filter_set
 
     @classmethod
     def from_kwargs(cls, name, filters, **kwargs):
@@ -298,11 +306,12 @@ class PhotometryLike(XYLike):
         show_data: bool = True,
         show_residuals: bool = True,
         show_legend: bool = True,
-        min_wave_lenght: Optional[float] = None,
-        max_wave_lenght: Optional[float] = None,
+        min_wave_length: Optional[float] = None,
+        max_wave_length: Optional[float] = None,
         model_label: Optional[str] = None,
         model_kwargs: Optional[Dict[str, Any]] = None,
         data_kwargs: Optional[Dict[str, Any]] = None,
+        data_color: Optional[str] = None,
         **kwargs,
     ) -> ResidualPlot:
 
@@ -446,29 +455,46 @@ class PhotometryLike(XYLike):
 
         residual_plot = ResidualPlot(show_residuals=show_residuals, **kwargs)
 
-        if min_wave_lenght is None or max_wave_lenght is None:
+        if data_color is None:
 
-            min_wlen, max_wlen = min(avg_wave_length), max(avg_wave_length)
+            if min_wave_length is None or max_wave_length is None:
+
+                min_wlen, max_wlen = min(avg_wave_length), max(avg_wave_length)
+
+            else:
+
+                min_wlen, max_wlen = min_wave_length, max_wave_length
+
+            cmap = cm.get_cmap(data_cmap)
+
+            for i, wlen in enumerate(avg_wave_length):
+
+                c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
+
+                _default_data_kwargs["color"] = c
+
+                residual_plot.add_data(
+                    x=avg_wave_length[i],
+                    y=magnitudes[i],
+                    xerr=widths[i] / 2.0,
+                    yerr=mag_errors[i],
+                    residuals=residuals[i],
+                    label=f"{self._name} {labels[i]}",
+                    show_data=show_data,
+                    **_default_data_kwargs,
+                )
 
         else:
 
-            min_wlen, max_wlen = min_wave_lenght, max_wave_lenght
-
-        cmap = cm.get_cmap(data_cmap)
-
-        for i, wlen in enumerate(avg_wave_length):
-
-            c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
-
-            _default_data_kwargs["color"] = c
+            _default_data_kwargs["color"] = data_color
 
             residual_plot.add_data(
-                x=avg_wave_length[i],
-                y=magnitudes[i],
-                xerr=widths[i] / 2.0,
-                yerr=mag_errors[i],
-                residuals=residuals[i],
-                label=f"{self._name} {labels[i]}",
+                x=avg_wave_length,
+                y=magnitudes,
+                xerr=widths / 2.0,
+                yerr=mag_errors,
+                residuals=residuals,
+                label=f"{self._name}",
                 show_data=show_data,
                 **_default_data_kwargs,
             )
