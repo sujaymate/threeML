@@ -327,6 +327,8 @@ class PhotometryLike(XYLike):
 
             self._filter_set.set_model(differential_flux)
 
+            log.info(f"rebuilding flux for {self._source_name}")
+
         else:
 
             self._source_name = source_name
