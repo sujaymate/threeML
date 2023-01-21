@@ -269,22 +269,100 @@ class PhotometryLike(XYLike):
 
         # sum up the differential
 
-        def differential_flux(energies):
+        if self._source_name is None:
 
-            fluxes = self._likelihood_model.get_point_source_fluxes(
-                0, energies, tag=self._tag
-            )
+            def differential_flux(energies):
 
-            # If we have only one point source, this will never be executed
-            for i in range(1, n_point_sources):
-
-                fluxes += self._likelihood_model.get_point_source_fluxes(
-                    i, energies, tag=self._tag
+                fluxes = self._likelihood_model.get_point_source_fluxes(
+                    0, energies, tag=self._tag
                 )
 
-            return fluxes
+                # If we have only one point source, this will never be executed
+                for i in range(1, n_point_sources):
+
+                    fluxes += self._likelihood_model.get_point_source_fluxes(
+                        i, energies, tag=self._tag
+                    )
+
+                return fluxes
+
+        else:
+
+            def differential_flux(energies):
+
+                fluxes = self._likelihood_model.sources[self._source_name](
+                    energies, tag=self._tag
+                )
+
+                return fluxes
 
         self._filter_set.set_model(differential_flux)
+
+    def assign_to_source(self, source_name: str) -> None:
+        """
+        Assign these data to the given source (instead of to the sum of all sources, which is the default)
+
+        :param source_name: name of the source (must be contained in the likelihood model)
+        :return: none
+        """
+
+        if self._likelihood_model is not None:
+            if source_name not in self._likelihood_model.sources:
+                log.error(
+                    f"Source {source_name} is not contained in "
+                    "the likelihood model"
+                )
+
+                raise RuntimeError()
+
+            self._source_name = source_name
+
+            def differential_flux(energies):
+
+                fluxes = self._likelihood_model.sources[self._source_name](
+                    energies, tag=self._tag
+                )
+
+                return fluxes
+
+            self._filter_set.set_model(differential_flux)
+
+        else:
+
+            self._source_name = source_name
+
+    def unassign_to_source(self) -> None:
+
+        """
+        Remove any source assignment and apply to
+        all point sources
+
+        :returns:
+
+        """
+        self._source_name = None
+
+        if self._likelihood_model is not None:
+            # sum up the differential
+
+            def differential_flux(energies):
+
+                fluxes = self._likelihood_model.get_point_source_fluxes(
+                    0, energies, tag=self._tag
+                )
+
+                # If we have only one point source, this will never be executed
+                for i in range(1, n_point_sources):
+
+                    fluxes += self._likelihood_model.get_point_source_fluxes(
+                        i, energies, tag=self._tag
+                    )
+
+                return fluxes
+
+            self._filter_set.set_model(differential_flux)
+
+            log.info(f"rebuilding integral flux function to use sources")
 
     def _get_total_expectation(self):
 
