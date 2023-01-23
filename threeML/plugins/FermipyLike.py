@@ -1094,6 +1094,8 @@ class FermipyLike(PluginPrototype):
 
         # now lets figure out the free and fixed sources
 
+        primary_source_names = []
+
         if primary_sources is not None:
 
             primary_source_names = np.atleast_1d(primary_sources)
@@ -1104,11 +1106,9 @@ class FermipyLike(PluginPrototype):
 
         for name in self._gta.like.sourceNames():
 
-            if primary_sources is not None:
+            if name in primary_source_names:
 
-                if name in primary_source_names:
-
-                    primary_sources.append(name)
+                primary_sources.append(name)
 
             else:
 
@@ -1183,8 +1183,6 @@ class FermipyLike(PluginPrototype):
 
             else:
 
-
-
                 if shade_fixed_sources:
 
                     color = fixed_sources_color
@@ -1219,8 +1217,6 @@ class FermipyLike(PluginPrototype):
                 sum_backgrounds = sum_backgrounds + source_counts
 
             else:
-
-
 
                 if shade_secondary_source:
 

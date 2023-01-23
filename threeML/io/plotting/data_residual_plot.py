@@ -300,6 +300,8 @@ class ResidualPlot:
 
         self._fig.subplots_adjust(hspace=0)
 
+        self._data_axis.autoscale(enable=True)
+
         if invert_y:
 
             self._data_axis.autoscale(enable=True)
