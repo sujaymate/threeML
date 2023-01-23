@@ -8,8 +8,8 @@ from omegaconf import II, MISSING, SI, OmegaConf
 from .plotting_structure import (
     BinnedSpectrumPlot,
     DataHistPlot,
+    FermiSpectrumPlot,
     MPLCmap,
-    PhotoSpectrumPlot,
 )
 
 
@@ -22,6 +22,12 @@ class OGIP:
 
 
 @dataclass
+class Fermipy:
+    fit_plot: FermiSpectrumPlot = FermiSpectrumPlot()
+#    data_plot: DataHistPlot = DataHistPlot()
+
+
+@dataclass
 class Photo:
     fit_plot: PhotoSpectrumPlot = PhotoSpectrumPlot()
 
@@ -30,7 +36,7 @@ class Photo:
 class Plugins:
     ogip: OGIP = OGIP()
     photo: Photo = Photo()
-
+    fermipy: Fermipy =Fermipy()
 
 @dataclass
 class TimeSeriesFit:
