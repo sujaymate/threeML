@@ -1112,7 +1112,7 @@ class FermipyLike(PluginPrototype):
 
             else:
 
-                if name in self._likelihood_model.sources[name]:
+                if name in self._likelihood_model.sources:
 
                     this_source: astromodels.sources.Source = (
                         self._likelihood_model.sources[name]
