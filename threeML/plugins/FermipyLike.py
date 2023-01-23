@@ -1151,6 +1151,8 @@ class FermipyLike(PluginPrototype):
         if primary_sources is not None:
             n_model_colors += len(primary_sources)
 
+        log.debug(f"there are {n_model_colors} colors to be used")
+
         if model_color is not None:
 
             model_colors = [model_color] * n_model_colors
@@ -1173,13 +1175,15 @@ class FermipyLike(PluginPrototype):
 
             log.debug(f"{source_name}: source_counts= {source_counts}")
 
+            sum_model += source_counts
+
             if not show_background_sources:
 
                 sum_backgrounds = sum_backgrounds + source_counts
 
             else:
 
-                sum_model += source_counts
+
 
                 if shade_fixed_sources:
 
@@ -1208,13 +1212,15 @@ class FermipyLike(PluginPrototype):
 
             log.debug(f"{source_name}: source_counts= {source_counts}")
 
+            sum_model += source_counts
+
             if not show_background_sources:
 
                 sum_backgrounds = sum_backgrounds + source_counts
 
             else:
 
-                sum_model += source_counts
+
 
                 if shade_secondary_source:
 
@@ -1281,7 +1287,7 @@ class FermipyLike(PluginPrototype):
         y_err = np.sqrt(y)
         log.debug(f"counts={y}")
 
-        significance_calc = Significance(Non=y, Noff=sum_backgrounds)
+        significance_calc = Significance(Non=y, Noff=sum_model)
 
         if ratio_residuals:
             resid = old_div((y - sum_model), sum_model)
