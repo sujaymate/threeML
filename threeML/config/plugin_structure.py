@@ -10,6 +10,7 @@ from .plotting_structure import (
     DataHistPlot,
     FermiSpectrumPlot,
     MPLCmap,
+    PhotoSpectrumPlot,
 )
 
 
@@ -24,6 +25,8 @@ class OGIP:
 @dataclass
 class Fermipy:
     fit_plot: FermiSpectrumPlot = FermiSpectrumPlot()
+
+
 #    data_plot: DataHistPlot = DataHistPlot()
 
 
@@ -36,7 +39,8 @@ class Photo:
 class Plugins:
     ogip: OGIP = OGIP()
     photo: Photo = Photo()
-    fermipy: Fermipy =Fermipy()
+    fermipy: Fermipy = Fermipy()
+
 
 @dataclass
 class TimeSeriesFit:
