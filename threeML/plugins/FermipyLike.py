@@ -1126,6 +1126,26 @@ class FermipyLike(PluginPrototype):
 
                         fixed_sources.append(name)
 
+                elif name == "galdiff":
+
+                    if self._nuisance_parameters["LAT_galdiff_Prefactor"].free:
+
+                        free_sources.append(name)
+
+                    else:
+
+                        fixed_sources.append(name)
+
+                elif name == "isodiff":
+
+                    if self._nuisance_parameters["LAT_isodiff_Prefactor"].free:
+
+                        free_sources.append(name)
+
+                    else:
+
+                        fixed_sources.append(name)
+
         log.debug(f"fixed_sources: {fixed_sources} ")
         log.debug(f"free_sources: {free_sources} ")
         log.debug(f"primary_sources: {primary_sources} ")
