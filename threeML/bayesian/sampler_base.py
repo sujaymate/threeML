@@ -7,7 +7,6 @@ import numpy as np
 from threeML.config import threeML_config
 
 try:
-
     # see if we have mpi and/or are using parallel
 
     from mpi4py import MPI
@@ -19,10 +18,8 @@ try:
         rank = comm.Get_rank()
 
     else:
-
         using_mpi = False
 except:
-
     using_mpi = False
 
 
@@ -92,7 +89,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
     @property
     def results(self) -> BayesianResults:
-
         return self._results
 
     @property
@@ -155,8 +151,9 @@ class SamplerBase(metaclass=abc.ABCMeta):
         """
         idx = arg_median(self._log_probability_values)
 
-        for i, (parameter_name, parameter) in enumerate(self._free_parameters.items()):
-
+        for i, (parameter_name, parameter) in enumerate(
+            self._free_parameters.items()
+        ):
             par = self._samples[parameter_name][idx]
 
             parameter.value = par
@@ -169,8 +166,9 @@ class SamplerBase(metaclass=abc.ABCMeta):
         """
         idx = self._log_probability_values.argmax()
 
-        for i, (parameter_name, parameter) in enumerate(self._free_parameters.items()):
-
+        for i, (parameter_name, parameter) in enumerate(
+            self._free_parameters.items()
+        ):
             par = self._samples[parameter_name][idx]
 
             parameter.value = par
@@ -186,7 +184,9 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
         self._samples = collections.OrderedDict()
 
-        for i, (parameter_name, parameter) in enumerate(self._free_parameters.items()):
+        for i, (parameter_name, parameter) in enumerate(
+            self._free_parameters.items()
+        ):
             # Add the samples for this parameter for this source
 
             self._samples[parameter_name] = self._raw_samples[:, i]
@@ -202,24 +202,19 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
         # set the median or MAP
 
-                # Instance the result
+        # Instance the result
         if threeML_config.bayesian.use_median_fit:
-
             self.restore_median_fit()
 
         else:
-
             self.restore_MAP_fit()
-
 
         # Find maximum of the log posterior
 
         if threeML_config.bayesian.use_median_fit:
-
             idx = arg_median(self._log_probability_values)
 
         else:
-
             idx = self._log_probability_values.argmax()
 
         # Get parameter values at the maximum
@@ -227,7 +222,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
         # Sets the values of the parameters to their MAP values
         for i, parameter in enumerate(self._free_parameters):
-
             self._free_parameters[parameter].value = approximate_MAP_point[i]
 
         # Get the value of the posterior for each dataset at the MAP
@@ -243,7 +237,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
         total_log_posterior = 0
 
         for dataset in list(self._data_list.values()):
-
             log_posterior = dataset.get_log_like() + log_prior
 
             log_posteriors[dataset.name] = log_posterior
@@ -273,18 +266,15 @@ class SamplerBase(metaclass=abc.ABCMeta):
         statistical_measures["PDIC"] = pdic
 
         if self._marginal_likelihood is not None:
-
             statistical_measures["log(Z)"] = self._marginal_likelihood
 
         # TODO: add WAIC
 
         # Instance the result
         if threeML_config.bayesian.use_median_fit:
-
             self.restore_median_fit()
 
         else:
-
             self.restore_MAP_fit()
 
         self._results = BayesianResults(
@@ -312,7 +302,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
         # self._update_free_parameters()
 
         if len(self._free_parameters) != len(trial_values):
-
             msg = "Something is wrong. Number of free parameters\ndo not match the number of trial values."
 
             log.error(msg)
@@ -323,8 +312,9 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
         # with use_
 
-        for i, (parameter_name, parameter) in enumerate(self._free_parameters.items()):
-
+        for i, (parameter_name, parameter) in enumerate(
+            self._free_parameters.items()
+        ):
             prior_value = parameter.prior(trial_values[i])
 
             if prior_value == 0:
@@ -333,7 +323,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
                 return -np.inf
 
             else:
-
                 parameter.value = trial_values[i]
 
                 log_prior += math.log(prior_value)
@@ -351,17 +340,19 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
         log_prior = 0
 
-        for i, (parameter_name, parameter) in enumerate(self._free_parameters.items()):
-
+        for i, (parameter_name, parameter) in enumerate(
+            self._free_parameters.items()
+        ):
             prior_value = parameter.prior(trial_values[i])
 
             if prior_value == 0:
                 # Outside allowed region of parameter space
 
+                log.debug(f"parameter {parameter_name}  outside of boundaries")
+
                 return -np.inf
 
             else:
-
                 parameter.value = trial_values[i]
 
                 log_prior += math.log(prior_value)
@@ -374,7 +365,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
         # Get the value of the log-likelihood for this parameters
 
         try:
-
             log_like_values = np.zeros(self._n_plugins)
 
             # Loop over each dataset and get the likelihood values for each set
@@ -383,7 +373,6 @@ class SamplerBase(metaclass=abc.ABCMeta):
                 # spectrum calc is fast.
 
                 for i, dataset in enumerate(self._data_list.values()):
-
                     log_like_values[i] = dataset.get_log_like()
 
             else:
@@ -422,13 +411,11 @@ class SamplerBase(metaclass=abc.ABCMeta):
                         log_like_values[i] = dataset.get_log_like()
 
         except ModelAssertionViolation:
-
             # Fit engine or sampler outside of allowed zone
 
             return -np.inf
 
         except:
-
             # We don't want to catch more serious issues
 
             raise
@@ -445,7 +432,9 @@ class SamplerBase(metaclass=abc.ABCMeta):
                 for key in keys
             ]
 
-            log.warning(f"Likelihood value is infinite for parameters: {params}")
+            log.warning(
+                f"Likelihood value is infinite for parameters: {params}"
+            )
 
             return -np.inf
 
@@ -454,11 +443,9 @@ class SamplerBase(metaclass=abc.ABCMeta):
 
 class MCMCSampler(SamplerBase):
     def __init__(self, likelihood_model, data_list, **kwargs):
-
         super(MCMCSampler, self).__init__(likelihood_model, data_list, **kwargs)
 
     def _get_starting_points(self, n_walkers, variance=0.1):
-
         # Generate the starting points for the walkers by getting random
         # values for the parameters close to the current value
 
@@ -480,8 +467,9 @@ class MCMCSampler(SamplerBase):
 
 class UnitCubeSampler(SamplerBase):
     def __init__(self, likelihood_model, data_list, **kwargs):
-
-        super(UnitCubeSampler, self).__init__(likelihood_model, data_list, **kwargs)
+        super(UnitCubeSampler, self).__init__(
+            likelihood_model, data_list, **kwargs
+        )
 
     def _construct_unitcube_posterior(self, return_copy=False):
         """
@@ -493,7 +481,6 @@ class UnitCubeSampler(SamplerBase):
         self._update_free_parameters()
 
         def loglike(trial_values, ndim=None, params=None):
-
             # NOTE: the _log_like function DOES NOT assign trial_values to the parameters
 
             for i, parameter in enumerate(self._free_parameters.values()):
@@ -516,13 +503,10 @@ class UnitCubeSampler(SamplerBase):
                 for i, (parameter_name, parameter) in enumerate(
                     self._free_parameters.items()
                 ):
-
                     try:
-
                         params[i] = parameter.prior.from_unit_cube(params[i])
 
                     except AttributeError:
-
                         raise RuntimeError(
                             "The prior you are trying to use for parameter %s is "
                             "not compatible with sampling from a unitcube"
@@ -533,17 +517,13 @@ class UnitCubeSampler(SamplerBase):
         else:
 
             def prior(params, ndim=None, nparams=None):
-
                 for i, (parameter_name, parameter) in enumerate(
                     self._free_parameters.items()
                 ):
-
                     try:
-
                         params[i] = parameter.prior.from_unit_cube(params[i])
 
                     except AttributeError:
-
                         raise RuntimeError(
                             "The prior you are trying to use for parameter %s is "
                             "not compatible with sampling from a unitcube"
