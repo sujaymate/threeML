@@ -763,9 +763,8 @@ class FermipyLike(PluginPrototype):
             # NOTE: I use update_source=False because it makes things 100x faster and I verified that
             # it does not change the result.
             # (HF: Not sure who wrote the above but I think sometimes we do want to update fermipy dictionaries.)
-            self._gta.set_source_dnde(
-                extended_source.name, dnde_MeV, update_source=update_dictionary
-            )
+            self._gta.set_source_dnde(extended_source.name, dnde_MeV, update_source = update_dictionary)
+        #self._gta._update_roi()
 
     def get_log_like(self):
         """
