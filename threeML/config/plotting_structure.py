@@ -112,10 +112,10 @@ class PointSourcePlot:
     fit_cmap: MPLCmap = MPLCmap.Set1
     contour_cmap: MPLCmap = MPLCmap.Set1
     bayes_cmap: MPLCmap = MPLCmap.Set1
-    plot_style: PlotStyle = PlotStyle()
-    contour_style: ContourStyle = ContourStyle()
+    plot_style: PlotStyle = field(default_factory = PlotStyle)
+    contour_style: ContourStyle = field(default_factory = ContourStyle)
     show_legend: bool = True
-    legend_style: LegendStyle = LegendStyle()
+    legend_style: LegendStyle = field(default_factory = LegendStyle)
     flux_unit: str = "1/(keV s cm2)"
     emin: float = 10.0
     emax: float = 1e4
@@ -135,10 +135,10 @@ class ResidualPlot:
 class GenericPlotting:
     use_threeml_style: bool = True
     mplstyle: str = "threeml.mplstyle"
-    residual_plot: ResidualPlot = ResidualPlot()
+    residual_plot: ResidualPlot = field(default_factory = ResidualPlot)
 
 
 @dataclass
 class ModelPlotting:
 
-    point_source_plot: PointSourcePlot = PointSourcePlot()
+    point_source_plot: PointSourcePlot = field(default_factory = PointSourcePlot)
