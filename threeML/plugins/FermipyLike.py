@@ -81,14 +81,12 @@ def _get_unique_tag_from_configuration(configuration):
     string_to_hash = []
 
     for section, keys in keys_for_hash:
-
         if not section in configuration:
             log.critical(
                 "Configuration lacks section %s, which is required" % section
             )
 
         for key in keys:
-
             if not key in configuration[section]:
                 log.critical(
                     "Section %s in configuration lacks key %s, which is required"
@@ -126,7 +124,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
     log.info(f"Using IRFs {irfs}")
 
     if "gtlike" in configuration and "irfs" in configuration["gtlike"]:
-
         if irfs.upper() != configuration["gtlike"]["irfs"].upper():
             log.critical(
                 "Evclass points to IRFS %s, while you specified %s in the "
@@ -134,9 +131,7 @@ def _get_fermipy_instance(configuration, likelihood_model):
             )
 
     else:
-
         if not "gtlike" in configuration:
-
             configuration["gtlike"] = {}
 
         configuration["gtlike"]["irfs"] = irfs
@@ -173,7 +168,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
     for point_source in list(
         likelihood_model.point_sources.values()
     ):  # type: astromodels.PointSource
-
         this_source = {
             "Index": 2.56233,
             "Scale": 572.78,
@@ -193,7 +187,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
     for extended_source in list(
         likelihood_model.extended_sources.values()
     ):  # type: astromodels.ExtendedSource
-
         this_source = {
             "Index": 2.56233,
             "Scale": 572.78,
@@ -220,7 +213,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
             this_source["SpatialWidth"] = 1.36 * theShape.sigma.value
 
         elif theShape.name == "SpatialTemplate_2D":
-
             try:
                 (ra_min, ra_max), (dec_min, dec_max) = theShape.get_boundaries()
                 this_source["ra"] = circmean([ra_min, ra_max] * u.deg).value
@@ -235,7 +227,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
             this_source["Spatial_Filename"] = theShape._fitsfile
 
         else:
-
             log.critical(
                 f"Extended source {extended_source.name}: shape {theShape.name} not yet implemented for FermipyLike"
             )
@@ -261,7 +252,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
     for point_source in list(
         likelihood_model.point_sources.values()
     ):  # type: astromodels.PointSource
-
         # This will substitute the current spectrum with a FileFunction with the same shape and flux
         gta.set_source_spectrum(
             point_source.name, "FileFunction", update_source=False
@@ -274,11 +264,9 @@ def _get_fermipy_instance(configuration, likelihood_model):
         )  # fermipy energies are in GeV, we need keV
 
         if energies_keV is None:
-
             energies_keV = this_energies_keV
 
         else:
-
             # This is to make sure that all sources are evaluated at the same energies
 
             if not np.all(energies_keV == this_energies_keV):
@@ -294,7 +282,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
     for extended_source in list(
         likelihood_model.extended_sources.values()
     ):  # type: astromodels.ExtendedSource
-
         # This will substitute the current spectrum with a FileFunction with the same shape and flux
         gta.set_source_spectrum(
             extended_source.name, "FileFunction", update_source=False
@@ -307,11 +294,9 @@ def _get_fermipy_instance(configuration, likelihood_model):
         )  # fermipy energies are in GeV, we need keV
 
         if energies_keV is None:
-
             energies_keV = this_energies_keV
 
         else:
-
             # This is to make sure that all sources are evaluated at the same energies
 
             if not np.all(energies_keV == this_energies_keV):
@@ -329,7 +314,6 @@ def _get_fermipy_instance(configuration, likelihood_model):
 
 
 def _expensive_imports_hook():
-
     from fermipy.gtanalysis import GTAnalysis
     from GtBurst.LikelihoodComponent import (
         findGalacticTemplate,
@@ -347,7 +331,6 @@ class FermipyLike(PluginPrototype):
     """
 
     def __new__(cls, *args, **kwargs):
-
         instance = object.__new__(cls)
 
         # we do not catch here
@@ -374,7 +357,6 @@ class FermipyLike(PluginPrototype):
         # Check whether the provided configuration is a file
 
         if not isinstance(fermipy_config, dict):
-
             # Assume this is a file name
             configuration_file = sanitize_filename(fermipy_config)
 
@@ -385,11 +367,9 @@ class FermipyLike(PluginPrototype):
 
             # Read the configuration
             with open(configuration_file) as f:
-
                 self._configuration = yaml.load(f, Loader=yaml.SafeLoader)
 
         else:
-
             # Configuration is a dictionary. Nothing to do
             self._configuration = fermipy_config
 
@@ -397,7 +377,6 @@ class FermipyLike(PluginPrototype):
         # later on and will overwrite the one contained in 'model'
 
         if "model" in self._configuration:
-
             custom_warnings.warn(
                 "The provided configuration contains a 'model' section, which is useless as it "
                 "will be overridden"
@@ -406,7 +385,6 @@ class FermipyLike(PluginPrototype):
             self._configuration.pop("model")
 
         if "fileio" in self._configuration:
-
             custom_warnings.warn(
                 "The provided configuration contains a 'fileio' section, which will be "
                 "overwritten"
@@ -423,7 +401,6 @@ class FermipyLike(PluginPrototype):
             log.critical("You must provide a scfile in the data section")
 
         for datum in self._configuration["data"]:
-
             # Sanitize file name, as fermipy is not very good at handling relative paths or env. variables
 
             filename = str(
@@ -476,7 +453,6 @@ class FermipyLike(PluginPrototype):
         fermipy_verbosity=2,
         fermitools_chatter=2,
     ):
-
         from fermipy.config import ConfigManager
 
         # Get default config from fermipy
@@ -565,7 +541,6 @@ class FermipyLike(PluginPrototype):
 
     @property
     def gta(self):
-
         if self._gta is None:
             log.warning(
                 "You have to perform a fit or a bayesian analysis before accessing the "
@@ -617,13 +592,11 @@ class FermipyLike(PluginPrototype):
     def _update_model_in_fermipy(
         self, update_dictionary=False, delta=0.0, force_update=False
     ):
-
         # Substitute all spectra for point sources with FileSpectrum, so that we will be able to control
         # them from 3ML
         for point_source in list(
             self._likelihood_model.point_sources.values()
         ):  # type: astromodels.PointSource
-
             # Update this source only if it has free parameters (to gain time)
             if not (point_source.has_free_parameters or force_update):
                 continue
@@ -632,7 +605,6 @@ class FermipyLike(PluginPrototype):
             if force_update or (
                 point_source.position.ra.free or point_source.position.dec.free
             ):
-
                 model_pos = point_source.position.sky_coord
                 fermipy_pos = self._gta.roi.get_source_by_name(
                     point_source.name
@@ -668,14 +640,12 @@ class FermipyLike(PluginPrototype):
         for extended_source in list(
             self._likelihood_model.extended_sources.values()
         ):  # type: astromodels.ExtendedSource
-
             # Update this source only if it has free parameters (to gain time)
             if not (extended_source.has_free_parameters or force_update):
                 continue
 
             theShape = extended_source.spatial_shape
             if theShape.has_free_parameters or force_update:
-
                 fermipySource = self._gta.roi.get_source_by_name(
                     extended_source.name
                 )
@@ -686,14 +656,12 @@ class FermipyLike(PluginPrototype):
                 ]
 
                 if theShape.name == "Disk_on_sphere":
-
                     amPars = [
                         theShape.lon0.value,
                         theShape.lat0.value,
                         theShape.radius.value,
                     ]
                     if not np.allclose(fermipyPars, amPars, 1e-10):
-
                         temp_source = self._gta.delete_source(
                             extended_source.name
                         )
@@ -717,14 +685,12 @@ class FermipyLike(PluginPrototype):
                         )
 
                 elif theShape.name == "Gaussian_on_sphere":
-
                     amPars = [
                         theShape.lon0.value,
                         theShape.lat0.value,
                         1.36 * theShape.sigma.value,
                     ]
                     if not np.allclose(fermipyPars, amPars, 1e-10):
-
                         temp_source = self._gta.delete_source(
                             extended_source.name
                         )
@@ -763,8 +729,10 @@ class FermipyLike(PluginPrototype):
             # NOTE: I use update_source=False because it makes things 100x faster and I verified that
             # it does not change the result.
             # (HF: Not sure who wrote the above but I think sometimes we do want to update fermipy dictionaries.)
-            self._gta.set_source_dnde(extended_source.name, dnde_MeV, update_source = update_dictionary)
-        #self._gta._update_roi()
+            self._gta.set_source_dnde(
+                extended_source.name, dnde_MeV, update_source=update_dictionary
+            )
+        # self._gta._update_roi()
 
     def get_log_like(self):
         """
@@ -777,7 +745,6 @@ class FermipyLike(PluginPrototype):
 
         # update nuisance parameters
         if self._fit_nuisance_params:
-
             for parameter in self.nuisance_parameters:
                 self.set_nuisance_parameter_value(
                     parameter, self.nuisance_parameters[parameter].value
@@ -787,11 +754,9 @@ class FermipyLike(PluginPrototype):
 
         # Get value of the log likelihood
         try:
-
             value = self._gta.like.logLike.value()
 
         except:
-
             raise
 
         return value - logfactorial(int(self._gta.like.total_nobs()))
@@ -808,7 +773,6 @@ class FermipyLike(PluginPrototype):
         return self.get_log_like()
 
     def set_inner_minimization(self, flag: bool) -> None:
-
         """
         Turn on the minimization of the internal Fermi
         parameters
@@ -821,7 +785,6 @@ class FermipyLike(PluginPrototype):
         self._fit_nuisance_params: bool = bool(flag)
 
         for parameter in self.nuisance_parameters:
-
             self.nuisance_parameters[parameter].free = self._fit_nuisance_params
 
     def get_number_of_data_points(self):
@@ -834,7 +797,6 @@ class FermipyLike(PluginPrototype):
         num = len(self._gta.components)
 
         if self._gta.projtype == "WCS":
-
             num = (
                 num
                 * self._gta._enumbins
@@ -843,13 +805,11 @@ class FermipyLike(PluginPrototype):
             )
 
         if self._gta.projtype == "HPX":
-
             num = num * np.sum(self.geom.npix)
 
         return num
 
     def _set_nuisance_parameters(self):
-
         # Get the list of the sources
         sources = list(self.gta.roi.get_sources())
         sources = [s.name for s in sources if "diff" in s.name]
@@ -858,14 +818,12 @@ class FermipyLike(PluginPrototype):
         nuisance_parameters = collections.OrderedDict()
 
         for src_name in sources:
-
             if self._fit_nuisance_params:
                 self.gta.free_norm(src_name)
 
             pars = self.gta.get_free_source_params(src_name)
 
             for par in pars:
-
                 thisName = f"{self.name}_{src_name}_{par}"
                 bg_param_names.append(thisName)
 
@@ -893,7 +851,6 @@ class FermipyLike(PluginPrototype):
         return nuisance_parameters
 
     def _split_nuisance_parameter(self, param_name):
-
         tokens = param_name.split("_")
         pname = tokens[-1]
         src_name = "_".join(tokens[1:-1])
@@ -901,7 +858,6 @@ class FermipyLike(PluginPrototype):
         return src_name, pname
 
     def set_nuisance_parameter_value(self, paramName, value):
-
         srcName, parName = self._split_nuisance_parameter(paramName)
         self.gta.set_parameter(
             srcName, parName, value, scale=1, update_source=False
@@ -984,65 +940,47 @@ class FermipyLike(PluginPrototype):
         )
 
         if _kwargs_menu.model_mpl_kwargs is not None:
-
             for k, v in _kwargs_menu.model_mpl_kwargs.items():
-
                 _default_model_kwargs[k] = v
 
         if _kwargs_menu.data_mpl_kwargs is not None:
-
             for k, v in _kwargs_menu.data_mpl_kwargs.items():
-
                 _default_data_kwargs[k] = v
 
         if _kwargs_menu.background_mpl_kwargs is not None:
-
             for k, v in _kwargs_menu.background_mpl_kwargs.items():
-
                 _default_background_kwargs[k] = v
 
         if model_kwargs is not None:
-
             assert type(model_kwargs) == dict, "model_kwargs must be a dict"
 
             for k, v in list(model_kwargs.items()):
-
                 if k in _default_model_kwargs:
-
                     _default_model_kwargs[k] = v
 
                 else:
-
                     _default_model_kwargs[k] = v
 
         if data_kwargs is not None:
-
             assert type(data_kwargs) == dict, "data_kwargs must be a dict"
 
             for k, v in list(data_kwargs.items()):
-
                 if k in _default_data_kwargs:
-
                     _default_data_kwargs[k] = v
 
                 else:
-
                     _default_data_kwargs[k] = v
 
         if background_kwargs is not None:
-
             assert (
                 type(background_kwargs) == dict
             ), "background_kwargs must be a dict"
 
             for k, v in list(background_kwargs.items()):
-
                 if k in _default_background_kwargs:
-
                     _default_background_kwargs[k] = v
 
                 else:
-
                     _default_background_kwargs[k] = v
 
         # since we define some defualts, lets not overwrite
@@ -1051,23 +989,19 @@ class FermipyLike(PluginPrototype):
         _duplicates = (("ls", "linestyle"), ("lw", "linewidth"))
 
         for d in _duplicates:
-
             if (d[0] in _default_model_kwargs) and (
                 d[1] in _default_model_kwargs
             ):
-
                 _default_model_kwargs.pop(d[0])
 
             if (d[0] in _default_data_kwargs) and (
                 d[1] in _default_data_kwargs
             ):
-
                 _default_data_kwargs.pop(d[0])
 
             if (d[0] in _default_background_kwargs) and (
                 d[1] in _default_background_kwargs
             ):
-
                 _default_background_kwargs.pop(d[0])
 
         if model_label is None:
@@ -1096,7 +1030,6 @@ class FermipyLike(PluginPrototype):
         primary_source_names = []
 
         if primary_sources is not None:
-
             primary_source_names = np.atleast_1d(primary_sources)
             primary_sources = []
 
@@ -1104,45 +1037,35 @@ class FermipyLike(PluginPrototype):
         free_sources = []
 
         for name in self._gta.like.sourceNames():
-
             if name in primary_source_names:
-
                 primary_sources.append(name)
 
             else:
-
                 if name in self._likelihood_model.sources:
-
                     this_source: astromodels.sources.Source = (
                         self._likelihood_model.sources[name]
                     )
 
                     if this_source.has_free_parameters:
-
                         free_sources.append(name)
 
                     else:
-
                         fixed_sources.append(name)
 
                 elif name == "galdiff":
-
                     if self._nuisance_parameters["LAT_galdiff_Prefactor"].free:
-
                         free_sources.append(name)
 
                     else:
-
                         fixed_sources.append(name)
 
                 elif name == "isodiff":
-
-                    if self._nuisance_parameters["LAT_isodiff_Normalization"].free:
-
+                    if self._nuisance_parameters[
+                        "LAT_isodiff_Normalization"
+                    ].free:
                         free_sources.append(name)
 
                     else:
-
                         fixed_sources.append(name)
 
         log.debug(f"fixed_sources: {fixed_sources} ")
@@ -1150,9 +1073,7 @@ class FermipyLike(PluginPrototype):
         log.debug(f"primary_sources: {primary_sources} ")
 
         if not show_background_sources:
-
             if primary_sources is None:
-
                 msg = "no primary_sources set! Cannot compute net rate"
 
                 log.error(msg)
@@ -1173,11 +1094,9 @@ class FermipyLike(PluginPrototype):
         log.debug(f"there are {n_model_colors} colors to be used")
 
         if model_color is not None:
-
             model_colors = [model_color] * n_model_colors
 
         else:
-
             model_colors = cmap_intervals(n_model_colors, model_cmap)
 
         sum_model = np.zeros_like(
@@ -1189,7 +1108,6 @@ class FermipyLike(PluginPrototype):
         color_itr = 0
 
         for source_name in fixed_sources:
-
             source_counts = self._gta.model_counts_spectrum(source_name)[0]
 
             log.debug(f"{source_name}: source_counts= {source_counts}")
@@ -1197,18 +1115,14 @@ class FermipyLike(PluginPrototype):
             sum_model += source_counts
 
             if not show_background_sources:
-
                 sum_backgrounds = sum_backgrounds + source_counts
 
             else:
-
                 if shade_fixed_sources:
-
                     color = fixed_sources_color
                     label = None
 
                 else:
-
                     color = model_colors[color_itr]
 
                     color_itr += 1
@@ -1224,7 +1138,6 @@ class FermipyLike(PluginPrototype):
                 )
 
         for source_name in free_sources:
-
             source_counts = self._gta.model_counts_spectrum(source_name)[0]
 
             log.debug(f"{source_name}: source_counts= {source_counts}")
@@ -1232,18 +1145,14 @@ class FermipyLike(PluginPrototype):
             sum_model += source_counts
 
             if not show_background_sources:
-
                 sum_backgrounds = sum_backgrounds + source_counts
 
             else:
-
                 if shade_secondary_source:
-
                     color = secondary_sources_color
                     label = None
 
                 else:
-
                     color = model_colors[color_itr]
 
                     color_itr += 1
@@ -1258,9 +1167,7 @@ class FermipyLike(PluginPrototype):
                 )
 
         if primary_sources is not None:
-
             for source_name in primary_sources:
-
                 source_counts = self._gta.model_counts_spectrum(source_name)[0]
 
                 log.debug(f"{source_name}: source_counts= {source_counts}")
@@ -1328,11 +1235,9 @@ class FermipyLike(PluginPrototype):
         )
 
         if show_background_sources:
-
             y_label = "Rate\n(counts s$^{-1}$ keV$^{-1}$)"
 
         else:
-
             y_label = "Net Rate\n(counts s$^{-1}$ keV$^{-1}$)"
 
         return residual_plot.finalize(

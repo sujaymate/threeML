@@ -123,7 +123,7 @@ class DispersionSpectrumLike(SpectrumLike):
             self._like_model, integrate_method=self._model_integrate_method
         )
 
-        log.debug(f"{self._name} passing intfral flux function to RSP")
+        log.debug(f"{self._name} passing intgral flux function to RSP")
 
         self._integral_flux = integral
 

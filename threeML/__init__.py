@@ -310,6 +310,11 @@ from threeML.utils.data_download.Fermi_GBM.download_GBM_data import (
     download_GBM_daily_data,
 )
 
+from threeML.utils.photometry import PhotometericObservation, FilterSet, get_photometric_filter_library
+
+threeml_filter_library = get_photometric_filter_library()
+
+
 # Import the LAT data downloader
 from threeML.utils.data_download.Fermi_LAT.download_LAT_data import (
     download_LAT_data,
