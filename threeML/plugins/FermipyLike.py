@@ -621,9 +621,14 @@ class FermipyLike(PluginPrototype):
             if not (
                 point_source.has_free_parameters
                 or force_update
-                or (point_source.name not in self._ignored_sources)
+
             ):
-                log.info("no!")
+
+                continue
+
+            if point_source.name in self._ignored_sources:
+
+                log.info(f"Fermipy with ignore: {point_source.name}")
                 continue
 
             # Update source position if free
