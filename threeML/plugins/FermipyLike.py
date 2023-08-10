@@ -668,7 +668,7 @@ class FermipyLike(PluginPrototype):
             if not (
                 extended_source.has_free_parameters
                 or force_update
-                or (extended_source.name in not self._ignored_sources)
+                or (extended_source.name not in self._ignored_sources)
             ):
                 continue
 
@@ -1065,7 +1065,6 @@ class FermipyLike(PluginPrototype):
         free_sources = []
 
         for name in self._gta.like.sourceNames():
-
             if name in self._ignored_sources:
                 continue
 
