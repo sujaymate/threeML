@@ -623,6 +623,7 @@ class FermipyLike(PluginPrototype):
                 or force_update
                 or (point_source.name not in self._ignored_sources)
             ):
+                log.info("no!")
                 continue
 
             # Update source position if free
