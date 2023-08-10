@@ -98,7 +98,7 @@ def _get_unique_tag_from_configuration(configuration):
     return get_unique_deterministic_tag(",".join(string_to_hash))
 
 
-def _get_fermipy_instance(configuration, likelihood_model):
+def _get_fermipy_instance(configuration, likelihood_model, ignored_sources=[]):
     """
     Generate a 'model' configuration section for fermipy starting from a likelihood model from astromodels
 
@@ -168,70 +168,77 @@ def _get_fermipy_instance(configuration, likelihood_model):
     for point_source in list(
         likelihood_model.point_sources.values()
     ):  # type: astromodels.PointSource
-        this_source = {
-            "Index": 2.56233,
-            "Scale": 572.78,
-            "Prefactor": 2.4090e-12,
-        }
-        this_source["name"] = point_source.name
-        this_source["ra"] = point_source.position.ra.value
-        this_source["dec"] = point_source.position.dec.value
+        if point_source.name not in ignored_sources:
+            this_source = {
+                "Index": 2.56233,
+                "Scale": 572.78,
+                "Prefactor": 2.4090e-12,
+            }
+            this_source["name"] = point_source.name
+            this_source["ra"] = point_source.position.ra.value
+            this_source["dec"] = point_source.position.dec.value
 
-        # The spectrum used here is unconsequential, as it will be substituted by a FileFunction
-        # later on. So I will just use PowerLaw for everything
-        this_source["SpectrumType"] = "PowerLaw"
+            # The spectrum used here is unconsequential, as it will be substituted by a FileFunction
+            # later on. So I will just use PowerLaw for everything
+            this_source["SpectrumType"] = "PowerLaw"
 
-        sources.append(this_source)
+            sources.append(this_source)
 
     # extended sources
     for extended_source in list(
         likelihood_model.extended_sources.values()
     ):  # type: astromodels.ExtendedSource
-        this_source = {
-            "Index": 2.56233,
-            "Scale": 572.78,
-            "Prefactor": 2.4090e-12,
-        }
-        this_source["name"] = extended_source.name
-        # The spectrum used here is unconsequential, as it will be substituted by a FileFunction
-        # later on. So I will just use PowerLaw for everything
-        this_source["SpectrumType"] = "PowerLaw"
+        if extended_source.name not in ignored_sources:
+            this_source = {
+                "Index": 2.56233,
+                "Scale": 572.78,
+                "Prefactor": 2.4090e-12,
+            }
+            this_source["name"] = extended_source.name
+            # The spectrum used here is unconsequential, as it will be substituted by a FileFunction
+            # later on. So I will just use PowerLaw for everything
+            this_source["SpectrumType"] = "PowerLaw"
 
-        theShape = extended_source.spatial_shape
+            theShape = extended_source.spatial_shape
 
-        if theShape.name == "Disk_on_sphere":
-            this_source["SpatialModel"] = "RadialDisk"
-            this_source["ra"] = theShape.lon0.value
-            this_source["dec"] = theShape.lat0.value
-            this_source["SpatialWidth"] = theShape.radius.value
+            if theShape.name == "Disk_on_sphere":
+                this_source["SpatialModel"] = "RadialDisk"
+                this_source["ra"] = theShape.lon0.value
+                this_source["dec"] = theShape.lat0.value
+                this_source["SpatialWidth"] = theShape.radius.value
 
-        elif theShape.name == "Gaussian_on_sphere":
-            this_source["SpatialModel"] = "RadialGaussian"
-            this_source["ra"] = theShape.lon0.value
-            this_source["dec"] = theShape.lat0.value
-            # fermipy/fermi tools expect 68% containment radius = 1.36 sigma
-            this_source["SpatialWidth"] = 1.36 * theShape.sigma.value
+            elif theShape.name == "Gaussian_on_sphere":
+                this_source["SpatialModel"] = "RadialGaussian"
+                this_source["ra"] = theShape.lon0.value
+                this_source["dec"] = theShape.lat0.value
+                # fermipy/fermi tools expect 68% containment radius = 1.36 sigma
+                this_source["SpatialWidth"] = 1.36 * theShape.sigma.value
 
-        elif theShape.name == "SpatialTemplate_2D":
-            try:
-                (ra_min, ra_max), (dec_min, dec_max) = theShape.get_boundaries()
-                this_source["ra"] = circmean([ra_min, ra_max] * u.deg).value
-                this_source["dec"] = circmean([dec_min, dec_max] * u.deg).value
+            elif theShape.name == "SpatialTemplate_2D":
+                try:
+                    (ra_min, ra_max), (
+                        dec_min,
+                        dec_max,
+                    ) = theShape.get_boundaries()
+                    this_source["ra"] = circmean([ra_min, ra_max] * u.deg).value
+                    this_source["dec"] = circmean(
+                        [dec_min, dec_max] * u.deg
+                    ).value
 
-            except:
+                except:
+                    log.critical(
+                        f"Source {extended_source.name} does not have a template file set; must call read_file first()"
+                    )
+
+                this_source["SpatialModel"] = "SpatialMap"
+                this_source["Spatial_Filename"] = theShape._fitsfile
+
+            else:
                 log.critical(
-                    f"Source {extended_source.name} does not have a template file set; must call read_file first()"
+                    f"Extended source {extended_source.name}: shape {theShape.name} not yet implemented for FermipyLike"
                 )
 
-            this_source["SpatialModel"] = "SpatialMap"
-            this_source["Spatial_Filename"] = theShape._fitsfile
-
-        else:
-            log.critical(
-                f"Extended source {extended_source.name}: shape {theShape.name} not yet implemented for FermipyLike"
-            )
-
-        sources.append(this_source)
+            sources.append(this_source)
 
     # Add all sources to the model
     fermipy_model["sources"] = sources
@@ -252,63 +259,65 @@ def _get_fermipy_instance(configuration, likelihood_model):
     for point_source in list(
         likelihood_model.point_sources.values()
     ):  # type: astromodels.PointSource
-        # This will substitute the current spectrum with a FileFunction with the same shape and flux
-        gta.set_source_spectrum(
-            point_source.name, "FileFunction", update_source=False
-        )
+        if point_source.name not in ignored_sources:
+            # This will substitute the current spectrum with a FileFunction with the same shape and flux
+            gta.set_source_spectrum(
+                point_source.name, "FileFunction", update_source=False
+            )
 
-        # Get the energies at which to evaluate this source
-        this_log_energies, _flux = gta.get_source_dnde(point_source.name)
-        this_energies_keV = (
-            10**this_log_energies * 1e3
-        )  # fermipy energies are in GeV, we need keV
+            # Get the energies at which to evaluate this source
+            this_log_energies, _flux = gta.get_source_dnde(point_source.name)
+            this_energies_keV = (
+                10**this_log_energies * 1e3
+            )  # fermipy energies are in GeV, we need keV
 
-        if energies_keV is None:
-            energies_keV = this_energies_keV
+            if energies_keV is None:
+                energies_keV = this_energies_keV
 
-        else:
-            # This is to make sure that all sources are evaluated at the same energies
+            else:
+                # This is to make sure that all sources are evaluated at the same energies
 
-            if not np.all(energies_keV == this_energies_keV):
-                log.critical(
-                    "All sources should be evaluated at the same energies."
-                )
+                if not np.all(energies_keV == this_energies_keV):
+                    log.critical(
+                        "All sources should be evaluated at the same energies."
+                    )
 
-        dnde = point_source(energies_keV)  # ph / (cm2 s keV)
-        dnde_per_MeV = np.maximum(dnde * 1000.0, 1e-300)  # ph / (cm2 s MeV)
-        gta.set_source_dnde(point_source.name, dnde_per_MeV, False)
+            dnde = point_source(energies_keV)  # ph / (cm2 s keV)
+            dnde_per_MeV = np.maximum(dnde * 1000.0, 1e-300)  # ph / (cm2 s MeV)
+            gta.set_source_dnde(point_source.name, dnde_per_MeV, False)
 
     # Same for extended source
     for extended_source in list(
         likelihood_model.extended_sources.values()
     ):  # type: astromodels.ExtendedSource
-        # This will substitute the current spectrum with a FileFunction with the same shape and flux
-        gta.set_source_spectrum(
-            extended_source.name, "FileFunction", update_source=False
-        )
+        if extended_source.name not in ignored_sources:
+            # This will substitute the current spectrum with a FileFunction with the same shape and flux
+            gta.set_source_spectrum(
+                extended_source.name, "FileFunction", update_source=False
+            )
 
-        # Get the energies at which to evaluate this source
-        this_log_energies, _flux = gta.get_source_dnde(extended_source.name)
-        this_energies_keV = (
-            10**this_log_energies * 1e3
-        )  # fermipy energies are in GeV, we need keV
+            # Get the energies at which to evaluate this source
+            this_log_energies, _flux = gta.get_source_dnde(extended_source.name)
+            this_energies_keV = (
+                10**this_log_energies * 1e3
+            )  # fermipy energies are in GeV, we need keV
 
-        if energies_keV is None:
-            energies_keV = this_energies_keV
+            if energies_keV is None:
+                energies_keV = this_energies_keV
 
-        else:
-            # This is to make sure that all sources are evaluated at the same energies
+            else:
+                # This is to make sure that all sources are evaluated at the same energies
 
-            if not np.all(energies_keV == this_energies_keV):
-                log.critical(
-                    "All sources should be evaluated at the same energies."
-                )
+                if not np.all(energies_keV == this_energies_keV):
+                    log.critical(
+                        "All sources should be evaluated at the same energies."
+                    )
 
-        dnde = extended_source.get_spatially_integrated_flux(
-            energies_keV
-        )  # ph / (cm2 s keV)
-        dnde_per_MeV = np.maximum(dnde * 1000.0, 1e-300)  # ph / (cm2 s MeV)
-        gta.set_source_dnde(extended_source.name, dnde_per_MeV, False)
+            dnde = extended_source.get_spatially_integrated_flux(
+                energies_keV
+            )  # ph / (cm2 s keV)
+            dnde_per_MeV = np.maximum(dnde * 1000.0, 1e-300)  # ph / (cm2 s MeV)
+            gta.set_source_dnde(extended_source.name, dnde_per_MeV, False)
 
     return gta, energies_keV
 
@@ -391,6 +400,14 @@ class FermipyLike(PluginPrototype):
             )
 
             self._configuration.pop("fileio")
+
+        if "ignore_sources" in self._configuration:
+            self._ignored_sources: List[str] = self._configuration.pop(
+                "ignored_sources"
+            )
+
+        else:
+            self._ignored_sources = []
 
         # Now check that the data exists
 
@@ -581,7 +598,9 @@ class FermipyLike(PluginPrototype):
         self._likelihood_model = likelihood_model_instance
 
         self._gta, self._pts_energies = _get_fermipy_instance(
-            self._configuration, likelihood_model_instance
+            self._configuration,
+            likelihood_model_instance,
+            self._ignored_sources,
         )
         self._update_model_in_fermipy(update_dictionary=True, force_update=True)
 
@@ -594,11 +613,16 @@ class FermipyLike(PluginPrototype):
     ):
         # Substitute all spectra for point sources with FileSpectrum, so that we will be able to control
         # them from 3ML
+
         for point_source in list(
             self._likelihood_model.point_sources.values()
         ):  # type: astromodels.PointSource
             # Update this source only if it has free parameters (to gain time)
-            if not (point_source.has_free_parameters or force_update):
+            if not (
+                point_source.has_free_parameters
+                or force_update
+                or (point_source.name in self._ignored_sources)
+            ):
                 continue
 
             # Update source position if free
@@ -641,7 +665,11 @@ class FermipyLike(PluginPrototype):
             self._likelihood_model.extended_sources.values()
         ):  # type: astromodels.ExtendedSource
             # Update this source only if it has free parameters (to gain time)
-            if not (extended_source.has_free_parameters or force_update):
+            if not (
+                extended_source.has_free_parameters
+                or force_update
+                or (extended_source.name in self._ignored_sources)
+            ):
                 continue
 
             theShape = extended_source.spatial_shape
@@ -1037,6 +1065,10 @@ class FermipyLike(PluginPrototype):
         free_sources = []
 
         for name in self._gta.like.sourceNames():
+
+            if name in self._ignored_sources:
+                continue
+
             if name in primary_source_names:
                 primary_sources.append(name)
 
