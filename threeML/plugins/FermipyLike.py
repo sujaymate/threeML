@@ -621,7 +621,7 @@ class FermipyLike(PluginPrototype):
             if not (
                 point_source.has_free_parameters
                 or force_update
-                or (point_source.name in self._ignored_sources)
+                or (point_source.name not in self._ignored_sources)
             ):
                 continue
 
@@ -668,7 +668,7 @@ class FermipyLike(PluginPrototype):
             if not (
                 extended_source.has_free_parameters
                 or force_update
-                or (extended_source.name in self._ignored_sources)
+                or (extended_source.name in not self._ignored_sources)
             ):
                 continue
 
