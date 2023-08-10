@@ -401,7 +401,7 @@ class FermipyLike(PluginPrototype):
 
             self._configuration.pop("fileio")
 
-        if "ignore_sources" in self._configuration:
+        if "ignored_sources" in self._configuration:
             self._ignored_sources: List[str] = self._configuration.pop(
                 "ignored_sources"
             )
