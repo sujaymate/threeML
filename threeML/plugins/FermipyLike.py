@@ -15,7 +15,6 @@ from astropy.stats import circmean
 from past.utils import old_div
 from threeML.config.config import threeML_config
 from threeML.config.plotting_structure import FermiSpectrumPlot
-from threeML.exceptions.custom_exceptions import custom_warnings
 from threeML.io.dict_with_pretty_print import DictWithPrettyPrint
 from threeML.io.file_utils import sanitize_filename
 from threeML.io.logging import setup_logger
@@ -27,10 +26,6 @@ from threeML.utils.power_of_two_utils import is_power_of_2
 from threeML.utils.statistics.gammaln import logfactorial
 from threeML.utils.statistics.stats_tools import Significance
 from threeML.utils.unique_deterministic_tag import get_unique_deterministic_tag
-
-log = setup_logger(__name__)
-
-from threeML.io.logging import setup_logger
 
 log = setup_logger(__name__)
 
@@ -386,7 +381,7 @@ class FermipyLike(PluginPrototype):
         # later on and will overwrite the one contained in 'model'
 
         if "model" in self._configuration:
-            custom_warnings.warn(
+            log.warning(
                 "The provided configuration contains a 'model' section, which is useless as it "
                 "will be overridden"
             )
@@ -394,7 +389,7 @@ class FermipyLike(PluginPrototype):
             self._configuration.pop("model")
 
         if "fileio" in self._configuration:
-            custom_warnings.warn(
+            log.warning(
                 "The provided configuration contains a 'fileio' section, which will be "
                 "overwritten"
             )
@@ -434,8 +429,8 @@ class FermipyLike(PluginPrototype):
         # so that the same configuration will write in the same directory and fermipy will
         # know that it doesn't need to recompute things
 
-        self._unique_id = "__%s" % _get_unique_tag_from_configuration(
-            self._configuration
+        self._unique_id: str = (
+            f"__{_get_unique_tag_from_configuration( self._configuration)}"
         )
 
         self._configuration["fileio"] = {"outdir": self._unique_id}
@@ -566,7 +561,7 @@ class FermipyLike(PluginPrototype):
 
         return self._gta
 
-    def get_observation_duration(self):
+    def get_observation_duration(self) -> float:
         event_file = self._configuration["data"]["evfile"]
         tmin = self._configuration["selection"]["tmin"]
         tmax = self._configuration["selection"]["tmax"]
@@ -584,10 +579,11 @@ class FermipyLike(PluginPrototype):
             - (gti_stop[myfilter][-1] - tmax)
         )
 
-        print("FermipyLike - GTI SUM = ", observation_duration)
+        log.info(f"FermipyLike - GTI SUM = {observation_duration}")
+
         return observation_duration
 
-    def set_model(self, likelihood_model_instance):
+    def set_model(self, likelihood_model_instance: Model) -> None:
         """
         Set the model to be used in the joint minimization. Must be a LikelihoodModel instance.
         """
@@ -595,7 +591,7 @@ class FermipyLike(PluginPrototype):
         # This will take a long time if it's the first time we run, as it will select the data,
         # produce livetime cube, expomap, source maps and so on
 
-        self._likelihood_model = likelihood_model_instance
+        self._likelihood_model: Model = likelihood_model_instance
 
         self._gta, self._pts_energies = _get_fermipy_instance(
             self._configuration,
@@ -618,16 +614,10 @@ class FermipyLike(PluginPrototype):
             self._likelihood_model.point_sources.values()
         ):  # type: astromodels.PointSource
             # Update this source only if it has free parameters (to gain time)
-            if not (
-                point_source.has_free_parameters
-                or force_update
-
-            ):
-
+            if not (point_source.has_free_parameters or force_update):
                 continue
 
             if point_source.name in self._ignored_sources:
-
                 log.info(f"Fermipy with ignore: {point_source.name}")
                 continue
 
@@ -768,7 +758,7 @@ class FermipyLike(PluginPrototype):
             )
         # self._gta._update_roi()
 
-    def get_log_like(self):
+    def get_log_like(self) -> float:
         """
         Return the value of the log-likelihood with the current values for the
         parameters stored in the ModelManager instance
@@ -821,7 +811,7 @@ class FermipyLike(PluginPrototype):
         for parameter in self.nuisance_parameters:
             self.nuisance_parameters[parameter].free = self._fit_nuisance_params
 
-    def get_number_of_data_points(self):
+    def get_number_of_data_points(self) -> int:
         """
         Return the number of spatial/energy bins
 
