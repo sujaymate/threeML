@@ -1080,7 +1080,7 @@ class FermipyLike(PluginPrototype):
                         fixed_sources.append(name)
 
                 elif name == "galdiff":
-                    if self._nuisance_parameters["LAT_galdiff_Prefactor"].free:
+                    if self._nuisance_parameters[f"{self._name}_galdiff_Prefactor"].free:
                         free_sources.append(name)
 
                     else:
@@ -1088,7 +1088,7 @@ class FermipyLike(PluginPrototype):
 
                 elif name == "isodiff":
                     if self._nuisance_parameters[
-                        "LAT_isodiff_Normalization"
+                        f"{self._name}_isodiff_Normalization"
                     ].free:
                         free_sources.append(name)
 

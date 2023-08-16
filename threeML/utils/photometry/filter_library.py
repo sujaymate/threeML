@@ -4,11 +4,9 @@ import astropy.units as u
 import h5py
 import speclite.filters as spec_filter
 import yaml
-from threeML.utils.progress_bar import tqdm
-
-from threeML.io.package_data import get_path_of_data_dir
 from threeML.io.logging import setup_logger
-
+from threeML.io.package_data import get_path_of_data_dir
+from threeML.utils.progress_bar import tqdm
 
 log = setup_logger(__name__)
 
