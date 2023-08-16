@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import astropy.units as u
@@ -13,19 +12,17 @@ from threeML.io.logging import setup_logger
 
 log = setup_logger(__name__)
 
-def get_speclite_filter_path() -> Path:
 
+def get_speclite_filter_path() -> Path:
     return get_path_of_data_dir() / "optical_filters"
 
 
 def get_speclite_filter_library() -> Path:
-
     return get_speclite_filter_path() / "filter_library.h5"
 
 
 class ObservatoryNode(object):
     def __init__(self, sub_dict):
-
         self._sub_dict = sub_dict
 
     def __repr__(self):
@@ -44,16 +41,13 @@ class FilterLibrary(object):
         # get the filter file
 
         with h5py.File(get_speclite_filter_library(), "r") as f:
-
             self._instruments = []
 
-            for observatory in tqdm(f.keys(), desc="Loading photometric filters"):
-
+            for observatory in f.keys():
                 log.debug(f"loading {observatory}")
 
                 sub_dict = {}
                 for instrument in f[observatory].keys():
-
                     sub_dict[instrument] = instrument
 
                 # create a node for the observatory
@@ -62,11 +56,9 @@ class FilterLibrary(object):
                 # attach it to the object
 
                 if observatory == "2MASS":
-
                     xx = "TwoMass"
 
                 else:
-
                     xx = observatory
 
                 setattr(self, xx, this_node)
@@ -74,7 +66,6 @@ class FilterLibrary(object):
                 # now get the instruments
 
                 for instrument in f[observatory].keys():
-
                     # update the instruments
 
                     self._instruments.append(instrument)
@@ -85,7 +76,6 @@ class FilterLibrary(object):
                     filters = []
 
                     for ff in this_grp.keys():
-
                         grp = this_grp[ff]
 
                         this_filter = spec_filter.FilterResponse(
@@ -94,7 +84,7 @@ class FilterLibrary(object):
                             meta=dict(
                                 group_name=instrument,
                                 band_name=ff,
-                            )
+                            ),
                         )
 
                         filters.append(this_filter)
@@ -108,7 +98,6 @@ class FilterLibrary(object):
 
     @property
     def instruments(self):
-
         return self._instruments
 
     # def __repr__(self):
@@ -120,9 +109,7 @@ def get_photometric_filter_library():
     Get the 3ML filter library
     """
     if get_speclite_filter_library().exists():
-
         return FilterLibrary()
 
     else:
-
         raise RuntimeError("The threeML filter library does not exist!")
